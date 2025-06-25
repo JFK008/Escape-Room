@@ -20,10 +20,10 @@
   </div>
   <script>
     const puzzles = [
-      { image: "puzzle1.jpg", solution: "apfel" },
-      { image: "puzzle2.jpg", solution: "42" },
-      { image: "puzzle3.jpg", solution: "h2o" },
-      { image: "puzzle4.jpg", solution: "xylophon" }
+      { image: "puzzle1.jpg", solution: "1" },
+      { image: "puzzle2.jpg", solution: "2" },
+      { image: "puzzle3.jpg", solution: "3" },
+      { image: "puzzle4.jpg", solution: "4" }
     ];
     const container = document.getElementById("puzzles");
     puzzles.forEach((puzzle, index) => {
