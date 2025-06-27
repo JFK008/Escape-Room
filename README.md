@@ -14,33 +14,38 @@
             flex-direction: column;
             gap: 1rem;
             border: 1px solid #e5e7eb;
-            border-radius: 0.5rem;
+            border-radius: 1rem;
             padding: 1rem;
             background-color: white;
-            box-shadow: 0 1px 3px 0 rgb(0 0 0 / 0.1), 0 1px 2px -1px rgb(0 0 0 / 0.1);
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+        .puzzle-card:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
         }
         .puzzle-card img {
             max-height: 300px;
             width: 100%;
             object-fit: contain;
-            border-radius: 0.25rem;
+            border-radius: 0.5rem;
         }
         .hidden { display: none; }
     </style>
 </head>
-<body class="bg-gray-100 min-h-screen flex items-center justify-center p-4">
+<body class="min-h-screen bg-gradient-to-br from-indigo-100 to-pink-100 flex items-center justify-center py-12 px-4">
 
-    <div id="app-container" class="w-full max-w-2xl mx-auto bg-white rounded-xl shadow-lg p-6 md:p-8">
+    <div id="app-container" class="w-full max-w-3xl mx-auto bg-white rounded-xl shadow-2xl p-8 md:p-10 lg:p-12 ring-1 ring-gray-200">
 
         <!-- Initial Screen -->
         <div id="initial-screen">
-            <h1 class="text-3xl font-bold text-center text-gray-800 mb-2">Escape Room</h1>
-            <p class="text-center text-gray-500 mb-8">Wähle einen Modus</p>
+            <h1 class="text-4xl font-extrabold text-center mb-2 bg-gradient-to-r from-blue-600 to-teal-500 bg-clip-text text-transparent">Escape Room</h1>
+            <p class="text-center text-gray-600 mb-8 text-lg">Wähle einen Modus</p>
             <div class="flex flex-col md:flex-row gap-4">
-                <button id="go-to-teacher-btn" class="w-full bg-blue-600 text-white font-bold py-3 px-4 rounded-lg hover:bg-blue-700 transition-colors">
+                <button id="go-to-teacher-btn" class="w-full bg-indigo-600 text-white font-bold py-4 px-6 rounded-full hover:bg-indigo-700 transition-all shadow-md">
                     Lehrer-Modus
                 </button>
-                <button id="go-to-student-btn" class="w-full bg-green-600 text-white font-bold py-3 px-4 rounded-lg hover:bg-green-700 transition-colors">
+                <button id="go-to-student-btn" class="w-full bg-teal-600 text-white font-bold py-4 px-6 rounded-full hover:bg-teal-700 transition-all shadow-md">
                     Schüler-Modus
                 </button>
             </div>
@@ -48,35 +53,35 @@
 
         <!-- PIN Setup Screen -->
         <div id="pin-setup-screen" class="hidden">
-            <h2 class="text-2xl font-bold text-gray-800 mb-4">Lehrer-PIN festlegen</h2>
-            <p class="text-gray-600 mb-6">Bitte lege eine 4-stellige PIN fest, um den Lehrer-Bereich zu schützen. Merke dir diese PIN gut!</p>
+            <h2 class="text-3xl font-bold text-gray-800 mb-4">Lehrer-PIN festlegen</h2>
+            <p class="text-gray-600 mb-6 text-lg">Bitte lege eine 4-stellige PIN fest, um den Lehrer-Bereich zu schützen. Merke dir diese PIN gut!</p>
             <form id="pin-setup-form" class="space-y-4">
-                <input type="password" id="new-pin-input" inputmode="numeric" pattern="[0-9]{4}" title="Vierstelliger numerischer PIN" placeholder="4-stellige PIN eingeben" maxlength="4" class="w-full p-3 border border-gray-300 rounded-lg text-center text-2xl tracking-widest" required>
-                <button type="submit" class="w-full bg-blue-600 text-white font-bold py-3 px-4 rounded-lg hover:bg-blue-700 transition-colors">PIN festlegen und starten</button>
+                <input type="password" id="new-pin-input" inputmode="numeric" pattern="[0-9]{4}" title="Vierstelliger numerischer PIN" placeholder="4-stellige PIN eingeben" maxlength="4" class="w-full p-4 border border-gray-300 rounded-lg text-center text-3xl tracking-widest shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-200" required>
+                <button type="submit" class="w-full bg-indigo-600 text-white font-bold py-3 px-6 rounded-lg hover:bg-indigo-700 transition-all shadow-md">PIN festlegen und starten</button>
             </form>
         </div>
         
         <!-- Teacher Login Screen -->
         <div id="teacher-login-screen" class="hidden">
-            <h2 class="text-2xl font-bold text-gray-800 mb-4">Lehrer-Login</h2>
-            <p class="text-gray-600 mb-6">Bitte gib deine 4-stellige PIN ein.</p>
+            <h2 class="text-3xl font-bold text-gray-800 mb-4">Lehrer-Login</h2>
+            <p class="text-gray-600 mb-6 text-lg">Bitte gib deine 4-stellige PIN ein.</p>
             <form id="teacher-login-form" class="space-y-4">
-                <input type="password" id="pin-input" inputmode="numeric" pattern="[0-9]{4}" placeholder="PIN eingeben" maxlength="4" class="w-full p-3 border border-gray-300 rounded-lg text-center text-2xl tracking-widest" required>
-                <p id="login-error" class="text-red-500 text-center hidden">Falsche PIN!</p>
-                <button type="submit" class="w-full bg-blue-600 text-white font-bold py-3 px-4 rounded-lg hover:bg-blue-700 transition-colors">Anmelden</button>
-                <button type="button" id="back-to-main-from-login" class="w-full bg-gray-500 text-white font-bold py-2 px-4 rounded-lg hover:bg-gray-600 transition-colors">Zurück</button>
+                <input type="password" id="pin-input" inputmode="numeric" pattern="[0-9]{4}" placeholder="PIN eingeben" maxlength="4" class="w-full p-4 border border-gray-300 rounded-lg text-center text-3xl tracking-widest shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-200" required>
+                <p id="login-error" class="text-red-500 text-center mt-2 hidden">Falsche PIN!</p>
+                <button type="submit" class="w-full bg-indigo-600 text-white font-bold py-3 px-6 rounded-lg hover:bg-indigo-700 transition-all shadow-md">Anmelden</button>
+                <button type="button" id="back-to-main-from-login" class="w-full bg-gray-400 text-white font-bold py-2 px-4 rounded-lg hover:bg-gray-500 transition-all">Zurück</button>
             </form>
         </div>
 
         <!-- Teacher Dashboard -->
         <div id="teacher-dashboard" class="hidden">
             <div class="flex justify-between items-center mb-6">
-                <h2 class="text-2xl font-bold text-gray-800">Lehrer-Dashboard</h2>
-                <button id="exit-teacher-mode" class="bg-gray-500 text-white font-bold py-2 px-4 rounded-lg hover:bg-gray-600 transition-colors">Modus verlassen</button>
+                <h2 class="text-3xl font-bold text-gray-800">Lehrer-Dashboard</h2>
+                <button id="exit-teacher-mode" class="bg-gray-500 text-white font-bold py-2 px-4 rounded-lg hover:bg-gray-600 transition-all">Modus verlassen</button>
             </div>
             
-            <div class="bg-gray-50 p-6 rounded-lg mb-6">
-                <h3 class="text-xl font-bold text-gray-700 mb-4">Neues Rätsel erstellen</h3>
+            <div class="bg-indigo-50 p-6 rounded-lg mb-6 shadow">
+                <h3 class="text-2xl font-bold text-gray-700 mb-4">Neues Rätsel erstellen</h3>
                 <form id="add-puzzle-form" class="space-y-4">
                     <div>
                         <label for="puzzle-image" class="block text-sm font-medium text-gray-700 mb-1">Rätsel-Foto</label>
@@ -86,11 +91,11 @@
                         <label for="puzzle-solution" class="block text-sm font-medium text-gray-700 mb-1">Lösungswort oder -zahl</label>
                         <input type="text" id="puzzle-solution" placeholder="Lösung hier eingeben" class="w-full p-3 border border-gray-300 rounded-lg" required>
                     </div>
-                    <button type="submit" class="w-full bg-blue-600 text-white font-bold py-3 px-4 rounded-lg hover:bg-blue-700 transition-colors">Rätsel speichern</button>
+                    <button type="submit" class="w-full bg-indigo-600 text-white font-bold py-3 px-6 rounded-lg hover:bg-indigo-700 transition-all shadow-md">Rätsel speichern</button>
                 </form>
             </div>
 
-            <h3 class="text-xl font-bold text-gray-700 mb-4">Bestehende Rätsel</h3>
+            <h3 class="text-2xl font-bold text-gray-700 mb-4">Bestehende Rätsel</h3>
             <div id="teacher-puzzle-list" class="space-y-4">
                 <!-- Puzzles will be dynamically inserted here -->
             </div>
@@ -99,8 +104,8 @@
         <!-- Student View -->
         <div id="student-view" class="hidden">
             <div class="flex justify-between items-center mb-6">
-                 <h2 class="text-2xl font-bold text-gray-800">Schüler-Modus: Löst die Rätsel!</h2>
-                 <button id="exit-student-mode" class="bg-gray-500 text-white font-bold py-2 px-4 rounded-lg hover:bg-gray-600 transition-colors">Zurück</button>
+                 <h2 class="text-3xl font-bold text-gray-800">Schüler-Modus: Löse die Rätsel!</h2>
+                 <button id="exit-student-mode" class="bg-gray-500 text-white font-bold py-2 px-4 rounded-lg hover:bg-gray-600 transition-all">Zurück</button>
             </div>
            
             <div id="student-puzzle-container" class="space-y-6 mb-6">
@@ -109,12 +114,12 @@
 
             <div class="mt-8 border-t pt-6">
                 <p class="text-center text-lg mb-4">Fehlversuche: <span id="fail-counter" class="font-bold text-red-600">0</span></p>
-                <button id="open-escape-room-btn" class="w-full bg-green-600 text-white font-bold py-4 px-4 rounded-lg text-xl hover:bg-green-700 transition-colors">Escape Room öffnen!</button>
+                <button id="open-escape-room-btn" class="w-full bg-teal-600 text-white font-bold py-4 px-6 rounded-lg text-xl hover:bg-teal-700 transition-all shadow-md">Escape Room öffnen!</button>
                 <p id="student-feedback" class="text-center mt-4 font-semibold"></p>
             </div>
 
             <div class="mt-12 text-center">
-                 <button id="reset-all-btn" class="text-red-500 hover:text-red-700 hover:underline">Alles zurücksetzen</button>
+                 <button id="reset-all-btn" class="text-red-500 hover:text-red-700 hover:underline uppercase">Alles zurücksetzen</button>
             </div>
         </div>
         
@@ -211,7 +216,7 @@
 
             function renderStudentPuzzles() {
                 studentPuzzleContainer.innerHTML = '';
-                 if (state.puzzles.length === 0) {
+                if (state.puzzles.length === 0) {
                     studentPuzzleContainer.innerHTML = '<p class="text-center text-gray-500">Der Lehrer hat noch keine Rätsel erstellt.</p>';
                     openEscapeRoomBtn.disabled = true;
                     openEscapeRoomBtn.classList.add('opacity-50', 'cursor-not-allowed');
@@ -232,7 +237,6 @@
                     studentPuzzleContainer.appendChild(puzzleEl);
                 });
             }
-
 
             // --- Event Listeners ---
 
@@ -334,14 +338,12 @@
             });
             
             resetAllBtn.addEventListener('click', () => {
-                // We use a simple confirm dialog here. For a better UX, a custom modal would be preferable.
                 const userConfirmed = confirm("Bist du sicher, dass du ALLES zurücksetzen möchtest? Alle Rätsel, der PIN und die Fehlversuche werden unwiderruflich gelöscht.");
                 if (userConfirmed) {
                     localStorage.removeItem('escapeRoomState');
                     location.reload();
                 }
             });
-
 
             // --- Initialization ---
             function init() {
