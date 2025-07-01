@@ -47,6 +47,41 @@
     .hidden {
       display: none;
     }
+    .puzzle-thumb {
+      max-width: 60px;
+      max-height: 60px;
+      object-fit: cover;
+      border-radius: 0.5rem;
+      margin-right: 0.75rem;
+      border: 1px solid #ccc;
+    }
+    .puzzle-item {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      background-color: #fafafa;
+      padding: 0.5rem 1rem;
+      border-radius: 0.75rem;
+      box-shadow: 0 0 5px rgba(0,0,0,0.05);
+    }
+    .puzzle-info {
+      display: flex;
+      align-items: center;
+      flex: 1;
+    }
+    .puzzle-answer {
+      font-weight: 600;
+      color: #333;
+    }
+    .overlay-disabled {
+      pointer-events: none;
+      opacity: 0.5;
+    }
+    input[disabled] {
+      background-color: #e5e5ea;
+      color: #6b7280;
+      cursor: not-allowed;
+    }
   </style>
 </head>
 <body class="min-h-screen flex items-center justify-center p-6">
@@ -106,12 +141,15 @@
             <label for="puzzle-solution" class="block text-sm font-medium text-gray-700 mb-1">Lösungswort oder -zahl</label>
             <input type="text" id="puzzle-solution" required
                    class="w-full p-3 border border-gray-300 rounded-lg bg-white shadow-sm"
-                   placeholder="Lösung hier eingeben" />
+                   placeholder="Lösung hier eingeben" autocomplete="off" />
           </div>
           <button type="submit" class="btn-primary w-full">Rätsel speichern</button>
         </form>
       </div>
-      <h3 class="text-2xl font-semibold mb-4">Bestehende Rätsel</h3>
+      <div class="flex justify-between items-center mb-4">
+        <h3 class="text-2xl font-semibold">Bestehende Rätsel</h3>
+        <button id="teacher-reset-all-btn" class="btn-danger uppercase tracking-wide text-sm px-4 py-2">Alles zurücksetzen</button>
+      </div>
       <div id="teacher-puzzle-list" class="space-y-4"></div>
     </div>
 
@@ -132,6 +170,16 @@
       </div>
     </div>
 
+    <!-- Success Screen -->
+    <div id="success-screen" class="hidden">
+      <h2 class="text-4xl font-bold text-center mb-6 text-green-700">Herzlichen Glückwunsch!</h2>
+      <p class="text-center text-lg mb-4">Du hast alle Rätsel erfolgreich gelöst.</p>
+      <p class="text-center text-lg mb-8">Fehlversuche: <span id="total-fails" class="font-semibold text-red-600">0</span></p>
+      <div class="text-center">
+        <button id="success-back-btn" class="btn-primary px-8 py-3">Zurück</button>
+      </div>
+    </div>
+
   </div>
 
   <script>
@@ -142,70 +190,322 @@
       teacherLogin: document.getElementById('teacher-login-screen'),
       teacherDashboard: document.getElementById('teacher-dashboard'),
       studentView: document.getElementById('student-view'),
+      success: document.getElementById('success-screen'),
     };
 
+    // Buttons & Forms
     const goToTeacherBtn = document.getElementById('go-to-teacher-btn');
     const goToStudentBtn = document.getElementById('go-to-student-btn');
+
     const pinSetupForm = document.getElementById('pin-setup-form');
+    const newPinInput = document.getElementById('new-pin-input');
+
     const teacherLoginForm = document.getElementById('teacher-login-form');
-    const backToMainFromLoginBtn = document.getElementById('back-to-main-from-login');
+    const pinInput = document.getElementById('pin-input');
+    const loginError = document.getElementById('login-error');
+    const backToMainFromLogin = document.getElementById('back-to-main-from-login');
+
+    const addPuzzleForm = document.getElementById('add-puzzle-form');
+    const puzzleImageInput = document.getElementById('puzzle-image');
+    const puzzleSolutionInput = document.getElementById('puzzle-solution');
+    const teacherPuzzleList = document.getElementById('teacher-puzzle-list');
+    const teacherResetAllBtn = document.getElementById('teacher-reset-all-btn');
     const exitTeacherModeBtn = document.getElementById('exit-teacher-mode');
+
+    const studentView = document.getElementById('student-view');
+    const studentPuzzleContainer = document.getElementById('student-puzzle-container');
+    const failCounterEl = document.getElementById('fail-counter');
+    const openEscapeRoomBtn = document.getElementById('open-escape-room-btn');
+    const studentFeedback = document.getElementById('student-feedback');
+    const resetAllBtn = document.getElementById('reset-all-btn');
     const exitStudentModeBtn = document.getElementById('exit-student-mode');
 
-    let teacherPIN = null;
+    const successScreen = document.getElementById('success-screen');
+    const totalFailsEl = document.getElementById('total-fails');
+    const successBackBtn = document.getElementById('success-back-btn');
 
-    function showScreen(screenName) {
-      Object.values(screens).forEach(s => s.classList.add('hidden'));
-      screens[screenName].classList.remove('hidden');
+    // Variablen
+    let teacherPIN = localStorage.getItem('teacherPIN') || null;
+    let puzzles = JSON.parse(localStorage.getItem('puzzles') || '[]');
+    let failCount = 0;
+    let solvedPuzzles = new Set();
+
+    // Hilfsfunktionen
+    function switchScreen(toScreen) {
+      for (const key in screens) {
+        screens[key].classList.add('hidden');
+      }
+      toScreen.classList.remove('hidden');
     }
 
-    // Event Listeners
+    function savePuzzles() {
+      localStorage.setItem('puzzles', JSON.stringify(puzzles));
+    }
+
+    function saveTeacherPIN(pin) {
+      localStorage.setItem('teacherPIN', pin);
+      teacherPIN = pin;
+    }
+
+    function renderTeacherPuzzles() {
+      teacherPuzzleList.innerHTML = '';
+      if (puzzles.length === 0) {
+        teacherPuzzleList.innerHTML = '<p class="text-gray-500 italic">Keine Rätsel vorhanden.</p>';
+        return;
+      }
+      puzzles.forEach((puzzle, idx) => {
+        const div = document.createElement('div');
+        div.className = 'puzzle-item';
+
+        const infoDiv = document.createElement('div');
+        infoDiv.className = 'puzzle-info';
+
+        const img = document.createElement('img');
+        img.src = puzzle.image;
+        img.alt = 'Vorschau Rätselbild';
+        img.className = 'puzzle-thumb';
+        infoDiv.appendChild(img);
+
+        const answerSpan = document.createElement('span');
+        answerSpan.className = 'puzzle-answer';
+        answerSpan.textContent = puzzle.answer;
+        infoDiv.appendChild(answerSpan);
+
+        div.appendChild(infoDiv);
+
+        const delBtn = document.createElement('button');
+        delBtn.className = 'btn-danger text-sm px-3 py-1';
+        delBtn.textContent = 'Löschen';
+        delBtn.title = 'Dieses Rätsel löschen';
+        delBtn.addEventListener('click', () => {
+          if (confirm('Rätsel wirklich löschen?')) {
+            puzzles.splice(idx, 1);
+            savePuzzles();
+            renderTeacherPuzzles();
+          }
+        });
+        div.appendChild(delBtn);
+
+        teacherPuzzleList.appendChild(div);
+      });
+    }
+
+    function renderStudentPuzzles() {
+      studentPuzzleContainer.innerHTML = '';
+      if (puzzles.length === 0) {
+        studentPuzzleContainer.innerHTML = '<p class="text-gray-500 italic text-center">Keine Rätsel vorhanden.</p>';
+        return;
+      }
+      puzzles.forEach((puzzle, idx) => {
+        const div = document.createElement('div');
+        div.className = 'puzzle-item flex-col sm:flex-row sm:justify-between sm:items-center gap-2 sm:gap-0';
+
+        const infoDiv = document.createElement('div');
+        infoDiv.className = 'puzzle-info';
+
+        const img = document.createElement('img');
+        img.src = puzzle.image;
+        img.alt = 'Rätselbild';
+        img.className = 'puzzle-thumb';
+        infoDiv.appendChild(img);
+
+        const answerLabel = document.createElement('label');
+        answerLabel.textContent = `Lösung Rätsel ${idx + 1}: `;
+        answerLabel.className = 'block font-semibold text-gray-700 mb-1';
+
+        const input = document.createElement('input');
+        input.type = 'text';
+        input.className = 'p-2 rounded border border-gray-300 w-full sm:w-64';
+        input.autocomplete = 'off';
+        input.dataset.index = idx;
+        if (solvedPuzzles.has(idx)) {
+          input.value = puzzles[idx].answer;
+          input.disabled = true;
+          input.classList.add('overlay-disabled');
+        }
+
+        answerLabel.appendChild(input);
+        infoDiv.appendChild(answerLabel);
+
+        div.appendChild(infoDiv);
+
+        studentPuzzleContainer.appendChild(div);
+      });
+    }
+
+    // Initial Button-Events
     goToTeacherBtn.addEventListener('click', () => {
-      if (teacherPIN === null) {
-        showScreen('pinSetup');
+      if (!teacherPIN) {
+        switchScreen(screens.pinSetup);
+        newPinInput.value = '';
       } else {
-        showScreen('teacherLogin');
+        switchScreen(screens.teacherLogin);
+        pinInput.value = '';
+        loginError.classList.add('hidden');
       }
     });
 
     goToStudentBtn.addEventListener('click', () => {
-      showScreen('studentView');
+      failCount = 0;
+      solvedPuzzles = new Set();
+      failCounterEl.textContent = failCount;
+      studentFeedback.textContent = '';
+      renderStudentPuzzles();
+      switchScreen(screens.studentView);
     });
 
+    // PIN Setup Form
     pinSetupForm.addEventListener('submit', e => {
       e.preventDefault();
-      const pin = document.getElementById('new-pin-input').value.trim();
+      const pin = newPinInput.value.trim();
       if (/^\d{4}$/.test(pin)) {
-        teacherPIN = pin;
-        showScreen('teacherDashboard');
+        saveTeacherPIN(pin);
+        alert('PIN wurde gesetzt. Bitte melde dich nun an.');
+        switchScreen(screens.teacherLogin);
+        pinInput.value = '';
+        loginError.classList.add('hidden');
       } else {
-        alert('Bitte eine gültige 4-stellige PIN eingeben.');
+        alert('Bitte eine 4-stellige PIN eingeben.');
       }
     });
 
+    // Teacher Login Form
     teacherLoginForm.addEventListener('submit', e => {
       e.preventDefault();
-      const pin = document.getElementById('pin-input').value.trim();
-      const errorText = document.getElementById('login-error');
+      const pin = pinInput.value.trim();
       if (pin === teacherPIN) {
-        errorText.classList.add('hidden');
-        showScreen('teacherDashboard');
+        loginError.classList.add('hidden');
+        renderTeacherPuzzles();
+        puzzleImageInput.value = '';
+        puzzleSolutionInput.value = '';
+        switchScreen(screens.teacherDashboard);
       } else {
-        errorText.classList.remove('hidden');
+        loginError.classList.remove('hidden');
       }
     });
 
-    backToMainFromLoginBtn.addEventListener('click', () => {
-      showScreen('initial');
+    backToMainFromLogin.addEventListener('click', () => {
+      switchScreen(screens.initial);
+    });
+
+    // Add Puzzle Form
+    addPuzzleForm.addEventListener('submit', e => {
+      e.preventDefault();
+      const file = puzzleImageInput.files[0];
+      const answer = puzzleSolutionInput.value.trim();
+
+      if (!file) {
+        alert('Bitte ein Bild auswählen.');
+        return;
+      }
+      if (!answer) {
+        alert('Bitte eine Lösung eingeben.');
+        return;
+      }
+
+      const reader = new FileReader();
+
+      reader.onload = function(evt) {
+        const dataUrl = evt.target.result;
+        puzzles.push({
+          image: dataUrl,
+          answer: answer
+        });
+        savePuzzles();
+        renderTeacherPuzzles();
+
+        puzzleImageInput.value = '';
+        puzzleSolutionInput.value = '';
+        alert('Rätsel gespeichert.');
+      };
+
+      reader.onerror = function() {
+        alert('Fehler beim Lesen der Bilddatei.');
+      };
+
+      reader.readAsDataURL(file);
+    });
+
+    // Reset all puzzles - Teacher
+    teacherResetAllBtn.addEventListener('click', () => {
+      if (confirm('Alle Rätsel wirklich löschen?')) {
+        puzzles = [];
+        savePuzzles();
+        renderTeacherPuzzles();
+      }
     });
 
     exitTeacherModeBtn.addEventListener('click', () => {
-      showScreen('initial');
+      switchScreen(screens.initial);
     });
 
+    // Exit Student Mode
     exitStudentModeBtn.addEventListener('click', () => {
-      showScreen('initial');
+      switchScreen(screens.initial);
     });
+
+    // Reset all puzzles - Student
+    resetAllBtn.addEventListener('click', () => {
+      if (confirm('Alle Eingaben und Fehlversuche wirklich zurücksetzen?')) {
+        failCount = 0;
+        solvedPuzzles = new Set();
+        failCounterEl.textContent = failCount;
+        studentFeedback.textContent = '';
+        renderStudentPuzzles();
+      }
+    });
+
+    // Open Escape Room button (prüft alle Lösungen)
+    openEscapeRoomBtn.addEventListener('click', () => {
+      const inputs = studentPuzzleContainer.querySelectorAll('input[type="text"]');
+      let allCorrect = true;
+      let localFailCount = 0;
+
+      inputs.forEach(input => {
+        const idx = parseInt(input.dataset.index);
+        const userAnswer = input.value.trim().toLowerCase();
+        const correctAnswer = puzzles[idx].answer.trim().toLowerCase();
+
+        if (solvedPuzzles.has(idx)) {
+          // Bereits gelöst, kein Fehler
+          input.disabled = true;
+          input.classList.add('overlay-disabled');
+        } else if (userAnswer === correctAnswer) {
+          solvedPuzzles.add(idx);
+          input.disabled = true;
+          input.classList.add('overlay-disabled');
+        } else {
+          allCorrect = false;
+          localFailCount++;
+          input.classList.add('border-red-500');
+          setTimeout(() => input.classList.remove('border-red-500'), 1500);
+        }
+      });
+
+      if (localFailCount > 0) {
+        failCount += localFailCount;
+        failCounterEl.textContent = failCount;
+        studentFeedback.textContent = 'Einige Antworten sind falsch. Bitte erneut prüfen.';
+      } else {
+        studentFeedback.textContent = '';
+      }
+
+      // Wenn alle Rätsel gelöst, Erfolgsscreen zeigen
+      if (solvedPuzzles.size === puzzles.length && puzzles.length > 0) {
+        totalFailsEl.textContent = failCount;
+        switchScreen(screens.success);
+      }
+    });
+
+    // Zurück-Button im Erfolgsscreen
+    successBackBtn.addEventListener('click', () => {
+      // Felder im Schüler-Modus ausgegraut und gesperrt lassen
+      renderStudentPuzzles();
+      switchScreen(screens.studentView);
+    });
+
+    // Initial Startscreen zeigen
+    switchScreen(screens.initial);
   </script>
 </body>
 </html>
