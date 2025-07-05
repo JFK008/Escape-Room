@@ -151,7 +151,10 @@
       </div>
       <div class="flex justify-between items-center mb-4">
         <h3 class="text-2xl font-semibold">Bestehende Rätsel</h3>
-        <button id="teacher-reset-all-btn" class="btn-danger uppercase tracking-wide text-sm px-4 py-2">Alle Rätsel löschen</button>
+        <div class="flex gap-2">
+            <button id="reset-fails-btn" class="btn-secondary uppercase tracking-wide text-sm px-4 py-2">Fehlversuche zurücksetzen</button>
+            <button id="teacher-reset-all-btn" class="btn-danger uppercase tracking-wide text-sm px-4 py-2">Alle Rätsel löschen</button>
+        </div>
       </div>
       <div id="teacher-puzzle-list" class="space-y-4"></div>
     </div>
@@ -211,6 +214,7 @@
     const puzzleSolutionInput = document.getElementById('puzzle-solution');
     const teacherPuzzleList = document.getElementById('teacher-puzzle-list');
     const teacherResetAllBtn = document.getElementById('teacher-reset-all-btn');
+    const resetFailsBtn = document.getElementById('reset-fails-btn'); // NEUER BUTTON
     const exitTeacherModeBtn = document.getElementById('exit-teacher-mode');
 
     const studentView = document.getElementById('student-view');
@@ -227,7 +231,7 @@
     // Variablen
     let teacherPIN = localStorage.getItem('teacherPIN') || null;
     let puzzles = JSON.parse(localStorage.getItem('puzzles') || '[]');
-    let failCount = 0;
+    let failCount = parseInt(localStorage.getItem('failCount') || '0'); // Lädt den Zähler aus dem Speicher
     let solvedPuzzles = new Set();
 
     // Hilfsfunktionen
@@ -245,6 +249,10 @@
     function saveTeacherPIN(pin) {
       localStorage.setItem('teacherPIN', pin);
       teacherPIN = pin;
+    }
+    
+    function saveFailCount() {
+        localStorage.setItem('failCount', failCount);
     }
 
     function renderTeacherPuzzles() {
@@ -346,9 +354,8 @@
     });
 
     goToStudentBtn.addEventListener('click', () => {
-      failCount = 0;
-      solvedPuzzles = new Set();
-      failCounterEl.textContent = failCount;
+      solvedPuzzles = new Set(); // Nur die gelösten Rätsel zurücksetzen, nicht den failCount
+      failCounterEl.textContent = failCount; // Den gespeicherten failCount anzeigen
       studentFeedback.textContent = '';
       renderStudentPuzzles();
       switchScreen(screens.studentView);
@@ -388,14 +395,15 @@
       switchScreen(screens.initial);
     });
 
-    // --- NEU: PIN ZURÜCKSETZEN ---
+    // PIN ZURÜCKSETZEN
     resetPinBtn.addEventListener('click', () => {
-      if (confirm('Möchten Sie wirklich die PIN und alle gespeicherten Rätsel unwiderruflich löschen? Dies kann nicht rückgängig gemacht werden.')) {
+      if (confirm('Möchten Sie wirklich die PIN und alle gespeicherten Rätsel unwiderruflich löschen? Auch die Fehlversuche werden zurückgesetzt.')) {
         localStorage.removeItem('teacherPIN');
         localStorage.removeItem('puzzles');
+        localStorage.removeItem('failCount'); // Wichtig: Zähler auch löschen
         teacherPIN = null;
         puzzles = [];
-        failCount = 0; // Sicherstellen, dass alles zurückgesetzt ist
+        failCount = 0; 
         alert('PIN und alle Daten wurden erfolgreich zurückgesetzt.');
         switchScreen(screens.initial);
       }
@@ -417,27 +425,18 @@
       }
 
       const reader = new FileReader();
-
       reader.onload = function(evt) {
         const dataUrl = evt.target.result;
-        puzzles.push({
-          image: dataUrl,
-          answer: answer
-        });
+        puzzles.push({ image: dataUrl, answer: answer });
         savePuzzles();
         renderTeacherPuzzles();
-
         puzzleImageInput.value = '';
         puzzleSolutionInput.value = '';
         alert('Rätsel gespeichert.');
       };
-
       reader.onerror = function() {
         alert('Fehler beim Lesen der Bilddatei.');
       };
-
-
-
       reader.readAsDataURL(file);
     });
 
@@ -450,6 +449,15 @@
       } else if (puzzles.length === 0) {
         alert('Es sind keine Rätsel zum Löschen vorhanden.');
       }
+    });
+    
+    // --- NEU: Fehlversuche zurücksetzen ---
+    resetFailsBtn.addEventListener('click', () => {
+        if (confirm('Sollen die Fehlversuche für die nächste Runde wirklich auf 0 zurückgesetzt werden?')) {
+            failCount = 0;
+            saveFailCount();
+            alert('Die Fehlversuche wurden zurückgesetzt.');
+        }
     });
 
     exitTeacherModeBtn.addEventListener('click', () => {
@@ -489,6 +497,7 @@
         switchScreen(screens.success);
       } else {
         failCount++;
+        saveFailCount(); // Den neuen Zählerstand speichern
         failCounterEl.textContent = failCount;
         studentFeedback.textContent = 'Leider nicht korrekt. Mindestens eine Antwort ist falsch. Versuche es erneut!';
         studentFeedback.classList.add('text-red-500');
