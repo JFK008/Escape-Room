@@ -41,6 +41,21 @@
         <button id="go-to-teacher-btn" class="btn-primary w-full">Spielleiter‑Modus</button>
         <button id="go-to-student-btn" class="btn-secondary w-full">Escape‑Modus</button>
       </div>
+      <div class="mt-8 text-center">
+        <button id="show-how-it-works-btn" class="text-sm text-gray-500 hover:text-gray-700 hover:underline">Wie funktioniert's?</button>
+      </div>
+    </div>
+
+    <!-- How it works -->
+    <div id="how-it-works-screen" class="hidden">
+        <h2 class="text-3xl font-semibold mb-6">Wie funktioniert's?</h2>
+        <div class="space-y-4 text-gray-700 text-lg">
+            <p>Dieses Tool hilft dir, einen digitalen Escape Room zu erstellen und zu spielen. Es gibt zwei Hauptmodi:</p>
+            <p><strong>Spielleiter-Modus:</strong> Für den Ersteller des Spiels. Du legst eine 4-stellige PIN fest, um deine Rätsel zu schützen. Dann kannst du beliebig viele Rätsel hinzufügen. Jedes Rätsel besteht aus einem Bild, der korrekten Lösung und einem optionalen Hinweis.</p>
+            <p><strong>Escape-Modus:</strong> Für die Spieler. In diesem Modus sehen die Spieler alle Rätselbilder und müssen die Lösungen in die Textfelder eingeben. Ziel ist es, den "Escape Room zu öffnen", indem alle Lösungen korrekt eingegeben werden.</p>
+            <p class="text-sm text-gray-500 pt-4">Alle Daten (PIN, Rätsel) werden nur lokal in deinem Browser gespeichert und nicht auf einen Server hochgeladen.</p>
+        </div>
+        <button id="back-from-how-to-btn" class="btn-secondary w-full mt-8">Zurück</button>
     </div>
 
     <!-- PIN Setup -->
@@ -130,8 +145,8 @@
 
   <script>
     // --- DOM-Elemente auslesen ---
-    const screens = { initial: document.getElementById('initial-screen'), pinSetup: document.getElementById('pin-setup-screen'), teacherLogin: document.getElementById('teacher-login-screen'), teacherDashboard: document.getElementById('teacher-dashboard'), studentView: document.getElementById('student-view'), success: document.getElementById('success-screen'), };
-    const goToTeacherBtn = document.getElementById('go-to-teacher-btn'), goToStudentBtn = document.getElementById('go-to-student-btn');
+    const screens = { initial: document.getElementById('initial-screen'), howItWorks: document.getElementById('how-it-works-screen'), pinSetup: document.getElementById('pin-setup-screen'), teacherLogin: document.getElementById('teacher-login-screen'), teacherDashboard: document.getElementById('teacher-dashboard'), studentView: document.getElementById('student-view'), success: document.getElementById('success-screen'), };
+    const goToTeacherBtn = document.getElementById('go-to-teacher-btn'), goToStudentBtn = document.getElementById('go-to-student-btn'), showHowItWorksBtn = document.getElementById('show-how-it-works-btn'), backFromHowToBtn = document.getElementById('back-from-how-to-btn');
     const pinSetupForm = document.getElementById('pin-setup-form'), newPinInput = document.getElementById('new-pin-input');
     const teacherLoginForm = document.getElementById('teacher-login-form'), pinInput = document.getElementById('pin-input'), loginError = document.getElementById('login-error'), backToMainFromLogin = document.getElementById('back-to-main-from-login'), resetPinBtn = document.getElementById('reset-pin-btn');
     const addPuzzleForm = document.getElementById('add-puzzle-form'), puzzleImageInput = document.getElementById('puzzle-image'), puzzleSolutionInput = document.getElementById('puzzle-solution'), puzzleHintInput = document.getElementById('puzzle-hint'), teacherPuzzleList = document.getElementById('teacher-puzzle-list'), teacherResetAllBtn = document.getElementById('teacher-reset-all-btn'), resetFailsBtn = document.getElementById('reset-fails-btn'), exitTeacherModeBtn = document.getElementById('exit-teacher-mode');
@@ -188,6 +203,8 @@
     }
 
     // --- Event Listener ---
+    showHowItWorksBtn.addEventListener('click', () => switchScreen(screens.howItWorks));
+    backFromHowToBtn.addEventListener('click', () => switchScreen(screens.initial));
     goToTeacherBtn.addEventListener('click', () => { if (!teacherPIN) { switchScreen(screens.pinSetup); } else { dashboardFailCount.textContent = failCount; finalRewardInput.value = finalReward; switchScreen(screens.teacherLogin); } pinInput.value = ''; loginError.classList.add('hidden'); });
     goToStudentBtn.addEventListener('click', () => { failCounterEl.textContent = failCount; studentFeedback.textContent = ''; renderStudentPuzzles(); switchScreen(screens.studentView); });
     pinSetupForm.addEventListener('submit', (e) => { e.preventDefault(); const pin = newPinInput.value.trim(); if (/^\d{4}$/.test(pin)) { saveTeacherPIN(pin); alert('PIN wurde gesetzt. Bitte melde dich nun an.'); switchScreen(screens.teacherLogin); pinInput.value = ''; } else { alert('Bitte eine 4-stellige PIN eingeben.'); } });
