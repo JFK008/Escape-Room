@@ -92,14 +92,14 @@
       <h1 class="text-5xl font-semibold text-center mb-4">Escape Room</h1>
       <p class="text-center text-gray-500 mb-8 text-lg">Wähle einen Modus</p>
       <div class="flex flex-col sm:flex-row gap-4">
-        <button id="go-to-teacher-btn" class="btn-primary w-full">Lehrer‑Modus</button>
-        <button id="go-to-student-btn" class="btn-secondary w-full">Schüler‑Modus</button>
+        <button id="go-to-teacher-btn" class="btn-primary w-full">Spielleiter‑Modus</button>
+        <button id="go-to-student-btn" class="btn-secondary w-full">Escape‑Modus</button>
       </div>
     </div>
 
     <!-- PIN Setup -->
     <div id="pin-setup-screen" class="hidden">
-      <h2 class="text-3xl font-semibold mb-2">Lehrer‑PIN festlegen</h2>
+      <h2 class="text-3xl font-semibold mb-2">Spielleiter‑PIN festlegen</h2>
       <p class="text-gray-500 mb-6 text-lg">Bitte lege eine 4‑stellige PIN fest. Gut merken!</p>
       <form id="pin-setup-form" class="space-y-4">
         <input type="password" id="new-pin-input" maxlength="4"
@@ -111,7 +111,7 @@
 
     <!-- Teacher Login -->
     <div id="teacher-login-screen" class="hidden">
-      <h2 class="text-3xl font-semibold mb-2">Lehrer‑Login</h2>
+      <h2 class="text-3xl font-semibold mb-2">Spielleiter‑Login</h2>
       <p class="text-gray-500 mb-6 text-lg">Gib deine 4‑stellige PIN ein.</p>
       <form id="teacher-login-form" class="space-y-4">
         <input type="password" id="pin-input" maxlength="4"
@@ -129,7 +129,7 @@
     <!-- Teacher Dashboard -->
     <div id="teacher-dashboard" class="hidden">
       <div class="flex justify-between items-center mb-6">
-        <h2 class="text-3xl font-semibold">Lehrer‑Dashboard</h2>
+        <h2 class="text-3xl font-semibold">Spielleiter‑Dashboard</h2>
         <button id="exit-teacher-mode" class="btn-secondary">Modus verlassen</button>
       </div>
       <div class="bg-gray-50 p-6 rounded-xl mb-6 shadow">
@@ -152,8 +152,8 @@
       <div class="flex justify-between items-center mb-4">
         <h3 class="text-2xl font-semibold">Bestehende Rätsel</h3>
         <div class="flex gap-2">
-            <button id="reset-fails-btn" class="btn-secondary uppercase tracking-wide text-sm px-4 py-2">Fehlversuche zurücksetzen</button>
-            <button id="teacher-reset-all-btn" class="btn-danger uppercase tracking-wide text-sm px-4 py-2">Alle Rätsel löschen</button>
+            <button id="reset-fails-btn" class="btn-secondary tracking-wide text-sm px-4 py-2">Fehlversuche zurücksetzen</button>
+            <button id="teacher-reset-all-btn" class="btn-danger tracking-wide text-sm px-4 py-2">Alle Rätsel löschen</button>
         </div>
       </div>
       <div id="teacher-puzzle-list" class="space-y-4"></div>
@@ -162,7 +162,7 @@
     <!-- Student View -->
     <div id="student-view" class="hidden">
       <div class="flex justify-between items-center mb-6">
-        <h2 class="text-3xl font-semibold">Schüler‑Modus: Rätsel lösen</h2>
+        <h2 class="text-3xl font-semibold">Escape‑Modus: Rätsel lösen</h2>
         <button id="exit-student-mode" class="btn-secondary">Zurück</button>
       </div>
       <div id="student-puzzle-container" class="space-y-6 mb-6"></div>
@@ -214,7 +214,7 @@
     const puzzleSolutionInput = document.getElementById('puzzle-solution');
     const teacherPuzzleList = document.getElementById('teacher-puzzle-list');
     const teacherResetAllBtn = document.getElementById('teacher-reset-all-btn');
-    const resetFailsBtn = document.getElementById('reset-fails-btn'); // NEUER BUTTON
+    const resetFailsBtn = document.getElementById('reset-fails-btn');
     const exitTeacherModeBtn = document.getElementById('exit-teacher-mode');
 
     const studentView = document.getElementById('student-view');
@@ -231,7 +231,7 @@
     // Variablen
     let teacherPIN = localStorage.getItem('teacherPIN') || null;
     let puzzles = JSON.parse(localStorage.getItem('puzzles') || '[]');
-    let failCount = parseInt(localStorage.getItem('failCount') || '0'); // Lädt den Zähler aus dem Speicher
+    let failCount = parseInt(localStorage.getItem('failCount') || '0');
     let solvedPuzzles = new Set();
 
     // Hilfsfunktionen
@@ -354,8 +354,8 @@
     });
 
     goToStudentBtn.addEventListener('click', () => {
-      solvedPuzzles = new Set(); // Nur die gelösten Rätsel zurücksetzen, nicht den failCount
-      failCounterEl.textContent = failCount; // Den gespeicherten failCount anzeigen
+      solvedPuzzles = new Set();
+      failCounterEl.textContent = failCount;
       studentFeedback.textContent = '';
       renderStudentPuzzles();
       switchScreen(screens.studentView);
@@ -400,7 +400,7 @@
       if (confirm('Möchten Sie wirklich die PIN und alle gespeicherten Rätsel unwiderruflich löschen? Auch die Fehlversuche werden zurückgesetzt.')) {
         localStorage.removeItem('teacherPIN');
         localStorage.removeItem('puzzles');
-        localStorage.removeItem('failCount'); // Wichtig: Zähler auch löschen
+        localStorage.removeItem('failCount');
         teacherPIN = null;
         puzzles = [];
         failCount = 0; 
@@ -451,7 +451,7 @@
       }
     });
     
-    // --- NEU: Fehlversuche zurücksetzen ---
+    // Fehlversuche zurücksetzen
     resetFailsBtn.addEventListener('click', () => {
         if (confirm('Sollen die Fehlversuche für die nächste Runde wirklich auf 0 zurückgesetzt werden?')) {
             failCount = 0;
@@ -497,7 +497,7 @@
         switchScreen(screens.success);
       } else {
         failCount++;
-        saveFailCount(); // Den neuen Zählerstand speichern
+        saveFailCount();
         failCounterEl.textContent = failCount;
         studentFeedback.textContent = 'Leider nicht korrekt. Mindestens eine Antwort ist falsch. Versuche es erneut!';
         studentFeedback.classList.add('text-red-500');
