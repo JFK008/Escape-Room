@@ -455,45 +455,45 @@
       }
     });
 
-    // Open Escape Room button (prüft alle Lösungen)
+    // Open Escape Room button (prüft alle Lösungen) - NEUE LOGIK
     openEscapeRoomBtn.addEventListener('click', () => {
       const inputs = studentPuzzleContainer.querySelectorAll('input[type="text"]');
-      let allCorrect = true;
-      let localFailCount = 0;
+      let allAreCorrect = true;
 
+      if (puzzles.length === 0) return; // Nichts tun, wenn keine Rätsel da sind
+
+      // Schritt 1: Prüfen, ob alle Antworten korrekt sind, ohne die UI zu ändern.
       inputs.forEach(input => {
         const idx = parseInt(input.dataset.index);
         const userAnswer = input.value.trim().toLowerCase();
         const correctAnswer = puzzles[idx].answer.trim().toLowerCase();
 
-        if (solvedPuzzles.has(idx)) {
-          // Bereits gelöst, kein Fehler
-          input.disabled = true;
-          input.classList.add('overlay-disabled');
-        } else if (userAnswer === correctAnswer) {
-          solvedPuzzles.add(idx);
-          input.disabled = true;
-          input.classList.add('overlay-disabled');
-        } else {
-          allCorrect = false;
-          localFailCount++;
-          input.classList.add('border-red-500');
-          setTimeout(() => input.classList.remove('border-red-500'), 1500);
+        if (userAnswer !== correctAnswer) {
+          allAreCorrect = false;
         }
       });
 
-      if (localFailCount > 0) {
-        failCount += localFailCount;
-        failCounterEl.textContent = failCount;
-        studentFeedback.textContent = 'Einige Antworten sind falsch. Bitte erneut prüfen.';
-      } else {
-        studentFeedback.textContent = '';
-      }
+      // Schritt 2: Basierend auf dem Ergebnis handeln.
+      if (allAreCorrect) {
+        // ERFOLG: Alle Antworten sind richtig.
+        studentFeedback.textContent = 'Perfekt! Alle Antworten sind richtig.';
+        studentFeedback.classList.remove('text-red-500');
+        studentFeedback.classList.add('text-green-500');
 
-      // Wenn alle Rätsel gelöst, Erfolgsscreen zeigen
-      if (solvedPuzzles.size === puzzles.length && puzzles.length > 0) {
+        // Jetzt alle Rätsel als "gelöst" markieren
+        puzzles.forEach((_, idx) => solvedPuzzles.add(idx));
+
+        // Erfolgsscreen anzeigen
         totalFailsEl.textContent = failCount;
         switchScreen(screens.success);
+      } else {
+        // FEHLER: Mindestens eine Antwort ist falsch.
+        failCount++;
+        failCounterEl.textContent = failCount;
+        studentFeedback.textContent = 'Leider nicht korrekt. Mindestens eine Antwort ist falsch. Versuche es erneut!';
+        studentFeedback.classList.add('text-red-500');
+        studentFeedback.classList.remove('text-green-500');
+        // WICHTIG: Keine visuellen Hinweise, welche Antwort falsch/richtig ist.
       }
     });
 
