@@ -5,6 +5,11 @@
   <title>Escape Room Ersteller</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <link href="https://fonts.googleapis.com/css2?family=SF+Pro+Display:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  
+  <!-- PhotoSwipe CSS für Vollbild-Galerie -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/photoswipe/4.1.3/photoswipe.min.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/photoswipe/4.1.3/default-skin/default-skin.min.css">
+
   <style>
     body {
       font-family: 'SF Pro Display', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
@@ -54,6 +59,10 @@
       border-radius: 0.5rem;
       margin-right: 0.75rem;
       border: 1px solid #ccc;
+    }
+    /* NEU: Visuelles Feedback für klickbare Bilder im Escape-Modus */
+    #student-view .puzzle-thumb {
+        cursor: zoom-in;
     }
     .puzzle-item {
       display: flex;
@@ -185,6 +194,44 @@
 
   </div>
 
+  <!-- NEU: PhotoSwipe Root-Element (für Vollbildanzeige) -->
+  <div class="pswp" tabindex="-1" role="dialog" aria-hidden="true">
+    <div class="pswp__bg"></div>
+    <div class="pswp__scroll-wrap">
+        <div class="pswp__container">
+            <div class="pswp__item"></div>
+            <div class="pswp__item"></div>
+            <div class="pswp__item"></div>
+        </div>
+        <div class="pswp__ui pswp__ui--hidden">
+            <div class="pswp__top-bar">
+                <div class="pswp__counter"></div>
+                <button class="pswp__button pswp__button--close" title="Schließen (Esc)"></button>
+                <button class="pswp__button pswp__button--zoom" title="Zoomen"></button>
+                <div class="pswp__preloader">
+                    <div class="pswp__preloader__icn">
+                      <div class="pswp__preloader__cut">
+                        <div class="pswp__preloader__donut"></div>
+                      </div>
+                    </div>
+                </div>
+            </div>
+            <div class="pswp__share-modal pswp__share-modal--hidden pswp__single-tap">
+                <div class="pswp__share-tooltip"></div> 
+            </div>
+            <button class="pswp__button pswp__button--arrow--left" title="Vorheriges (Pfeil links)"></button>
+            <button class="pswp__button pswp__button--arrow--right" title="Nächstes (Pfeil rechts)"></button>
+            <div class="pswp__caption">
+                <div class="pswp__caption__center"></div>
+            </div>
+        </div>
+    </div>
+  </div>
+
+  <!-- PhotoSwipe JS -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/photoswipe/4.1.3/photoswipe.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/photoswipe/4.1.3/photoswipe-ui-default.min.js"></script>
+
   <script>
     // Screens
     const screens = {
@@ -234,6 +281,38 @@
     let failCount = parseInt(localStorage.getItem('failCount') || '0');
     let solvedPuzzles = new Set();
 
+    // --- NEU: PhotoSwipe Logik ---
+    const pswpElement = document.querySelector('.pswp');
+
+    function openPhotoSwipe(imageSrc) {
+        // Lade das Bild, um seine echten Dimensionen zu bekommen
+        const tempImage = new Image();
+        tempImage.onload = function() {
+            const items = [{
+                src: imageSrc,
+                w: this.naturalWidth,
+                h: this.naturalHeight
+            }];
+
+            const options = {
+                index: 0,
+                closeOnScroll: false,
+                pinchToClose: true,
+                fullscreenEl: false,
+                zoomEl: true,
+                shareEl: false,
+                counterEl: false,
+                arrowEl: false,
+                preloaderEl: true,
+            };
+
+            const gallery = new PhotoSwipe(pswpElement, PhotoSwipeUI_Default, items, options);
+            gallery.init();
+        };
+        tempImage.src = imageSrc;
+    }
+
+
     // Hilfsfunktionen
     function switchScreen(toScreen) {
       for (const key in screens) {
@@ -264,23 +343,18 @@
       puzzles.forEach((puzzle, idx) => {
         const div = document.createElement('div');
         div.className = 'puzzle-item';
-
         const infoDiv = document.createElement('div');
         infoDiv.className = 'puzzle-info';
-
         const img = document.createElement('img');
         img.src = puzzle.image;
         img.alt = 'Vorschau Rätselbild';
         img.className = 'puzzle-thumb';
         infoDiv.appendChild(img);
-
         const answerSpan = document.createElement('span');
         answerSpan.className = 'puzzle-answer';
         answerSpan.textContent = puzzle.answer;
         infoDiv.appendChild(answerSpan);
-
         div.appendChild(infoDiv);
-
         const delBtn = document.createElement('button');
         delBtn.className = 'btn-danger text-sm px-3 py-1';
         delBtn.textContent = 'Löschen';
@@ -293,7 +367,6 @@
           }
         });
         div.appendChild(delBtn);
-
         teacherPuzzleList.appendChild(div);
       });
     }
@@ -307,20 +380,22 @@
       puzzles.forEach((puzzle, idx) => {
         const div = document.createElement('div');
         div.className = 'puzzle-item flex-col sm:flex-row sm:justify-between sm:items-center gap-2 sm:gap-0';
-
         const infoDiv = document.createElement('div');
         infoDiv.className = 'puzzle-info';
-
         const img = document.createElement('img');
         img.src = puzzle.image;
         img.alt = 'Rätselbild';
         img.className = 'puzzle-thumb';
+        
+        // NEU: Klick-Event für Vollbild
+        img.addEventListener('click', () => {
+            openPhotoSwipe(puzzle.image);
+        });
+        
         infoDiv.appendChild(img);
-
         const answerLabel = document.createElement('label');
         answerLabel.textContent = `Lösung Rätsel ${idx + 1}: `;
         answerLabel.className = 'block font-semibold text-gray-700 mb-1';
-
         const input = document.createElement('input');
         input.type = 'text';
         input.className = 'p-2 rounded border border-gray-300 w-full sm:w-64';
@@ -331,12 +406,9 @@
           input.disabled = true;
           input.classList.add('overlay-disabled');
         }
-
         answerLabel.appendChild(input);
         infoDiv.appendChild(answerLabel);
-
         div.appendChild(infoDiv);
-
         studentPuzzleContainer.appendChild(div);
       });
     }
@@ -352,7 +424,6 @@
         loginError.classList.add('hidden');
       }
     });
-
     goToStudentBtn.addEventListener('click', () => {
       solvedPuzzles = new Set();
       failCounterEl.textContent = failCount;
@@ -414,16 +485,8 @@
       e.preventDefault();
       const file = puzzleImageInput.files[0];
       const answer = puzzleSolutionInput.value.trim();
-
-      if (!file) {
-        alert('Bitte ein Bild auswählen.');
-        return;
-      }
-      if (!answer) {
-        alert('Bitte eine Lösung eingeben.');
-        return;
-      }
-
+      if (!file) { alert('Bitte ein Bild auswählen.'); return; }
+      if (!answer) { alert('Bitte eine Lösung eingeben.'); return; }
       const reader = new FileReader();
       reader.onload = function(evt) {
         const dataUrl = evt.target.result;
@@ -434,9 +497,7 @@
         puzzleSolutionInput.value = '';
         alert('Rätsel gespeichert.');
       };
-      reader.onerror = function() {
-        alert('Fehler beim Lesen der Bilddatei.');
-      };
+      reader.onerror = function() { alert('Fehler beim Lesen der Bilddatei.'); };
       reader.readAsDataURL(file);
     });
 
@@ -460,39 +521,25 @@
         }
     });
 
-    exitTeacherModeBtn.addEventListener('click', () => {
-      switchScreen(screens.initial);
-    });
-
-    // Exit Student Mode
-    exitStudentModeBtn.addEventListener('click', () => {
-      switchScreen(screens.initial);
-    });
+    exitTeacherModeBtn.addEventListener('click', () => { switchScreen(screens.initial); });
+    exitStudentModeBtn.addEventListener('click', () => { switchScreen(screens.initial); });
 
     // Open Escape Room button (prüft alle Lösungen)
     openEscapeRoomBtn.addEventListener('click', () => {
       const inputs = studentPuzzleContainer.querySelectorAll('input[type="text"]');
       let allAreCorrect = true;
-
       if (puzzles.length === 0) return;
-
       inputs.forEach(input => {
         const idx = parseInt(input.dataset.index);
         const userAnswer = input.value.trim().toLowerCase();
         const correctAnswer = puzzles[idx].answer.trim().toLowerCase();
-
-        if (userAnswer !== correctAnswer) {
-          allAreCorrect = false;
-        }
+        if (userAnswer !== correctAnswer) { allAreCorrect = false; }
       });
-
       if (allAreCorrect) {
         studentFeedback.textContent = 'Perfekt! Alle Antworten sind richtig.';
         studentFeedback.classList.remove('text-red-500');
         studentFeedback.classList.add('text-green-500');
-
         puzzles.forEach((_, idx) => solvedPuzzles.add(idx));
-
         totalFailsEl.textContent = failCount;
         switchScreen(screens.success);
       } else {
