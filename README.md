@@ -121,6 +121,9 @@
         <button type="submit" class="btn-primary w-full">Anmelden</button>
         <button type="button" id="back-to-main-from-login" class="btn-secondary w-full">Zurück</button>
       </form>
+      <div class="mt-6 text-center">
+         <button id="reset-pin-btn" class="text-sm text-gray-500 hover:text-red-600 hover:underline">PIN ZURÜCKSETZEN</button>
+      </div>
     </div>
 
     <!-- Teacher Dashboard -->
@@ -148,7 +151,7 @@
       </div>
       <div class="flex justify-between items-center mb-4">
         <h3 class="text-2xl font-semibold">Bestehende Rätsel</h3>
-        <button id="teacher-reset-all-btn" class="btn-danger uppercase tracking-wide text-sm px-4 py-2">Alles zurücksetzen</button>
+        <button id="teacher-reset-all-btn" class="btn-danger uppercase tracking-wide text-sm px-4 py-2">Alle Rätsel löschen</button>
       </div>
       <div id="teacher-puzzle-list" class="space-y-4"></div>
     </div>
@@ -164,9 +167,6 @@
         <p class="text-center text-lg mb-4">Fehlversuche: <span id="fail-counter" class="font-semibold text-red-600">0</span></p>
         <button id="open-escape-room-btn" class="btn-primary w-full text-xl py-4">Escape Room öffnen!</button>
         <p id="student-feedback" class="text-center mt-4 font-semibold"></p>
-      </div>
-      <div class="mt-12 text-center">
-        <button id="reset-all-btn" class="btn-danger uppercase tracking-wide">Alles zurücksetzen</button>
       </div>
     </div>
 
@@ -204,6 +204,7 @@
     const pinInput = document.getElementById('pin-input');
     const loginError = document.getElementById('login-error');
     const backToMainFromLogin = document.getElementById('back-to-main-from-login');
+    const resetPinBtn = document.getElementById('reset-pin-btn');
 
     const addPuzzleForm = document.getElementById('add-puzzle-form');
     const puzzleImageInput = document.getElementById('puzzle-image');
@@ -217,7 +218,6 @@
     const failCounterEl = document.getElementById('fail-counter');
     const openEscapeRoomBtn = document.getElementById('open-escape-room-btn');
     const studentFeedback = document.getElementById('student-feedback');
-    const resetAllBtn = document.getElementById('reset-all-btn');
     const exitStudentModeBtn = document.getElementById('exit-student-mode');
 
     const successScreen = document.getElementById('success-screen');
@@ -388,6 +388,19 @@
       switchScreen(screens.initial);
     });
 
+    // --- NEU: PIN ZURÜCKSETZEN ---
+    resetPinBtn.addEventListener('click', () => {
+      if (confirm('Möchten Sie wirklich die PIN und alle gespeicherten Rätsel unwiderruflich löschen? Dies kann nicht rückgängig gemacht werden.')) {
+        localStorage.removeItem('teacherPIN');
+        localStorage.removeItem('puzzles');
+        teacherPIN = null;
+        puzzles = [];
+        failCount = 0; // Sicherstellen, dass alles zurückgesetzt ist
+        alert('PIN und alle Daten wurden erfolgreich zurückgesetzt.');
+        switchScreen(screens.initial);
+      }
+    });
+
     // Add Puzzle Form
     addPuzzleForm.addEventListener('submit', e => {
       e.preventDefault();
@@ -423,15 +436,19 @@
         alert('Fehler beim Lesen der Bilddatei.');
       };
 
+
+
       reader.readAsDataURL(file);
     });
 
     // Reset all puzzles - Teacher
     teacherResetAllBtn.addEventListener('click', () => {
-      if (confirm('Alle Rätsel wirklich löschen?')) {
+      if (puzzles.length > 0 && confirm('Alle Rätsel wirklich löschen?')) {
         puzzles = [];
         savePuzzles();
         renderTeacherPuzzles();
+      } else if (puzzles.length === 0) {
+        alert('Es sind keine Rätsel zum Löschen vorhanden.');
       }
     });
 
@@ -444,25 +461,13 @@
       switchScreen(screens.initial);
     });
 
-    // Reset all puzzles - Student
-    resetAllBtn.addEventListener('click', () => {
-      if (confirm('Alle Eingaben und Fehlversuche wirklich zurücksetzen?')) {
-        failCount = 0;
-        solvedPuzzles = new Set();
-        failCounterEl.textContent = failCount;
-        studentFeedback.textContent = '';
-        renderStudentPuzzles();
-      }
-    });
-
-    // Open Escape Room button (prüft alle Lösungen) - NEUE LOGIK
+    // Open Escape Room button (prüft alle Lösungen)
     openEscapeRoomBtn.addEventListener('click', () => {
       const inputs = studentPuzzleContainer.querySelectorAll('input[type="text"]');
       let allAreCorrect = true;
 
-      if (puzzles.length === 0) return; // Nichts tun, wenn keine Rätsel da sind
+      if (puzzles.length === 0) return;
 
-      // Schritt 1: Prüfen, ob alle Antworten korrekt sind, ohne die UI zu ändern.
       inputs.forEach(input => {
         const idx = parseInt(input.dataset.index);
         const userAnswer = input.value.trim().toLowerCase();
@@ -473,33 +478,26 @@
         }
       });
 
-      // Schritt 2: Basierend auf dem Ergebnis handeln.
       if (allAreCorrect) {
-        // ERFOLG: Alle Antworten sind richtig.
         studentFeedback.textContent = 'Perfekt! Alle Antworten sind richtig.';
         studentFeedback.classList.remove('text-red-500');
         studentFeedback.classList.add('text-green-500');
 
-        // Jetzt alle Rätsel als "gelöst" markieren
         puzzles.forEach((_, idx) => solvedPuzzles.add(idx));
 
-        // Erfolgsscreen anzeigen
         totalFailsEl.textContent = failCount;
         switchScreen(screens.success);
       } else {
-        // FEHLER: Mindestens eine Antwort ist falsch.
         failCount++;
         failCounterEl.textContent = failCount;
         studentFeedback.textContent = 'Leider nicht korrekt. Mindestens eine Antwort ist falsch. Versuche es erneut!';
         studentFeedback.classList.add('text-red-500');
         studentFeedback.classList.remove('text-green-500');
-        // WICHTIG: Keine visuellen Hinweise, welche Antwort falsch/richtig ist.
       }
     });
 
     // Zurück-Button im Erfolgsscreen
     successBackBtn.addEventListener('click', () => {
-      // Felder im Schüler-Modus ausgegraut und gesperrt lassen
       renderStudentPuzzles();
       switchScreen(screens.studentView);
     });
