@@ -36,8 +36,7 @@
 
     <!-- Initial -->
     <div id="initial-screen">
-      <h1 class="text-5xl font-semibold text-center mb-4">Escape Room</h1>
-      <p class="text-center text-gray-500 mb-8 text-lg">Wähle einen Modus</p>
+      <p class="text-center text-gray-500 mb-8 text-lg pt-12">Wähle einen Modus</p>
       <div class="flex flex-col sm:flex-row gap-4">
         <button id="go-to-teacher-btn" class="btn-primary w-full">Spielleiter‑Modus</button>
         <button id="go-to-student-btn" class="btn-secondary w-full">Escape‑Modus</button>
